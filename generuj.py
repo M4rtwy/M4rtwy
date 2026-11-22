@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""Robi assets/profile-dark.svg i assets/profile-light.svg. Teksty i kolory zmieniasz tutaj."""
+import html
+import math
+from pathlib import Path
+
+W, H = 900, 520
+MONO = "'JetBrains Mono','Cascadia Code','SF Mono',Consolas,'DejaVu Sans Mono',monospace"
+SANS = "'Inter','Segoe UI','Noto Sans',Helvetica,Arial,sans-serif"
+
+THEMES = {
+    "dark": dict(bg="#070a14", tile="#0e1424", line="#1f2a44", txt="#e8edf8", dim="#8794b4", acc="#7aa2ff", acc2="#c08bff", chip="#16203a"),
+    "light": dict(bg="#eef2fb", tile="#ffffff", line="#d3dcf0", txt="#141a2c", dim="#5b6785", acc="#2f5fe0", acc2="#8a3fe0", chip="#eaf0fd"),
+}
+TERM = [  # (komenda, odpowiedz)
+    ("whoami", "M4rtwy"),
+    ("cat about.txt", "I make stuff on Linux."),
+    ("cat now.txt", "Breaking and fixing my Hyprland setup."),
+]
+CARD = ("What I make", "always in progress", ["Linux tools, Discord bots,", "websites and whatever else", "comes to mind."])
+STACK = [  # (kategoria, rzeczy)
+    ("Frontend", ["HTML", "CSS", "JavaScript", "QML"]),
+    ("Backend", ["Python", "Node.js", "Rust"]),
+    ("Mobile", ["Kotlin"]),
+    ("System", ["Linux", "Hyprland", "Bash", "Docker", "Git"]),
+]
+e = html.escape
+
+
+def mono(x, y, s, fill, size=15, cls="", extra=""):
+    w = round(len(s) * size * 0.6, 1)  # stala szerokosc znaku, zeby pisanie trafialo na kazdym systemie
+    return f'<text x="{x}" y="{y}" font-family="{MONO}" font-size="{size}" fill="{fill}" textLength="{w}" lengthAdjust="spacingAndGlyphs" xml:space="preserve" class="{cls}" {extra}>{e(s)}</text>', w
+
+
+def sans(x, y, s, fill, size=14, weight=400, anchor="start"):
+    return f'<text x="{x}" y="{y}" font-family="{SANS}" font-size="{size}" font-weight="{weight}" fill="{fill}" text-anchor="{anchor}">{e(s)}</text>'
+
+
+def tile(x, y, w, h, c, delay, inner):
+    return (f'<g class="tile" style="animation-delay:{delay}s"><rect x="{x}" y="{y}" width="{w}" height="{h}" rx="14" fill="{c["tile"]}" '
+            f'stroke="{c["line"]}"/>{inner}</g>')
+
+
+def build(c):
+    o, defs = [], []
+    # ---- pasek ----
+    bar = ""
+    for i in range(5):
+        bar += f'<circle cx="{38 + i * 20}" cy="30" r="4" fill="{c["line"]}"/>'
+    bar += f'<rect x="33" y="26" width="18" height="8" rx="4" fill="{c["acc"]}" class="ws"/>'
+    bar += f'<rect x="390" y="17" width="120" height="26" rx="13" fill="{c["chip"]}"/>' + sans(450, 35, "M4rtwy", c["txt"], 14, 700, "middle")
+    bar += sans(838, 35, "linux", c["dim"], 13, 500, "end") + f'<circle cx="858" cy="30" r="4" fill="{c["acc2"]}" class="pulse"/>'
+    o.append(tile(12, 12, 876, 36, c, 0.05, bar))
+    # ---- terminal ----
+    t, y, at = "", 104, 0.9
+    for n, (cmd, ans) in enumerate(TERM):
+        a, _ = mono(36, y, "$", c["acc2"], cls="show", extra=f'style="animation-delay:{at:.2f}s"')
+        b, w = mono(54, y, cmd, c["txt"])
+        dur = max(0.4, len(cmd) * 0.07)
+        defs.append(f'<clipPath id="k{n}"><rect x="54" y="{y - 18}" width="{w}" height="26" class="type" style="animation-duration:{dur:.2f}s;animation-delay:{at + .15:.2f}s;animation-timing-function:steps({len(cmd)})"/></clipPath>')
+        t += a + f'<g clip-path="url(#k{n})">{b}</g>'
+        at += dur + 0.35
+        r, _ = mono(36, y + 27, ans, c["acc"] if n == 0 else c["dim"], cls="show", extra=f'style="animation-delay:{at:.2f}s"')
+        t += r
+        at += 0.45
+        y += 64
+    a, _ = mono(36, y, "$", c["acc2"], cls="show", extra=f'style="animation-delay:{at:.2f}s"')
+    t += a + f'<g class="show" style="animation-delay:{at:.2f}s"><rect x="54" y="{y - 14}" width="9" height="18" fill="{c["txt"]}" class="blink"/></g>'
+    o.append(tile(12, 60, 520, 262, c, 0.2, t))
+    # ---- korektor dzwieku ----
+    n, base = 22, 292
+    bars = f'<line x1="566" y1="{base + 6}" x2="866" y2="{base + 6}" stroke="{c["line"]}"/>'
+    for i in range(n):
+        x = 568 + i * 13.6
+        top = 60 + 120 * math.sin(math.pi * (i + .5) / n) ** 1.2 + (i * 37) % 23   # najwyzej na srodku
+        dur, dl = 1.3 + (i * 53 % 80) / 100, -(i * 71 % 190) / 100
+        bars += (f'<g class="eq k{i % 4}" style="animation-duration:{dur:.2f}s;animation-delay:{dl:.2f}s">'
+                 f'<rect x="{x:.1f}" y="{base - top:.1f}" width="9" height="{top:.1f}" rx="4.5" fill="url(#gu)"/></g>')
+    defs.append(f'<linearGradient id="gu" gradientUnits="userSpaceOnUse" x1="0" y1="{base}" x2="0" y2="100"><stop offset="0" stop-color="{c["acc"]}"/><stop offset="1" stop-color="{c["acc2"]}"/></linearGradient>')
+    o.append(tile(544, 60, 344, 262, c, 0.35, bars))
+    # ---- projekt ----
+    name, lang, lines = CARD
+    s = sans(34, 370, name, c["txt"], 19, 700)
+    for j, l in enumerate(lines):
+        s += sans(34, 402 + j * 23, l, c["dim"], 14)
+    s += f'<circle cx="39" cy="483" r="5" fill="{c["acc"]}"/>' + sans(52, 488, lang, c["txt"], 13, 500)
+    o.append(tile(12, 334, 284, 174, c, 0.5, s))
+    # ---- czego uzywam ----
+    s, i = "", 0
+    for r, (cat, items) in enumerate(STACK):
+        y = 348 + r * 38
+        s += sans(330, y + 20, cat, c["dim"], 14, 600)
+        x = 420
+        for k in items:
+            w = len(k) * 7.4 + 24
+            s += f'<g class="pop" style="animation-delay:{1.0 + i * .08:.2f}s"><rect x="{x:.1f}" y="{y}" width="{w:.1f}" height="30" rx="15" fill="{c["chip"]}"/>{sans(round(x + w / 2, 1), y + 20, k, c["txt"], 13, 500, "middle")}</g>'
+            x += w + 8
+            i += 1
+    o.append(tile(308, 334, 580, 174, c, 0.65, s))
+    css = """
+.tile{opacity:0;transform-box:fill-box;transform-origin:center;animation:tile .6s cubic-bezier(.2,.9,.25,1.08) forwards}
+@keyframes tile{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.show{opacity:0;animation:show .01s linear forwards}
+@keyframes show{to{opacity:1}}
+.type{transform-box:fill-box;transform-origin:left;transform:scaleX(0);animation-name:type;animation-fill-mode:forwards}
+@keyframes type{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.pop{opacity:0;transform-box:fill-box;transform-origin:center;animation:pop .4s cubic-bezier(.2,.9,.3,1.3) forwards}
+@keyframes pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+.blink{animation:bl 1.1s steps(1) infinite}
+@keyframes bl{0%,55%{opacity:1}56%,100%{opacity:0}}
+.pulse{animation:pu 2.2s ease-in-out infinite}
+@keyframes pu{0%,100%{opacity:.3}50%{opacity:1}}
+.eq{transform-box:fill-box;transform-origin:bottom;animation:eq0 1.6s ease-in-out infinite alternate}
+.k1{animation-name:eq1}.k2{animation-name:eq2}.k3{animation-name:eq3}
+@keyframes eq0{0%{transform:scaleY(.2)}35%{transform:scaleY(.7)}60%{transform:scaleY(.4)}100%{transform:scaleY(1)}}
+@keyframes eq1{0%{transform:scaleY(.85)}30%{transform:scaleY(.3)}70%{transform:scaleY(.65)}100%{transform:scaleY(.15)}}
+@keyframes eq2{0%{transform:scaleY(.4)}25%{transform:scaleY(1)}55%{transform:scaleY(.25)}100%{transform:scaleY(.75)}}
+@keyframes eq3{0%{transform:scaleY(.6)}40%{transform:scaleY(.2)}75%{transform:scaleY(.95)}100%{transform:scaleY(.35)}}
+.ws{animation:ws 12s cubic-bezier(.3,1,.4,1) infinite}
+@keyframes ws{0%,18%{transform:translateX(0)}22%,42%{transform:translateX(20px)}46%,66%{transform:translateX(60px)}70%,90%{transform:translateX(40px)}94%,100%{transform:translateX(0)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;opacity:1!important}.type,.tile,.pop{transform:none!important}}
+"""
+    label = "M4rtwy. " + " ".join(a for _, a in TERM[1:]) + f" {CARD[0]}: {' '.join(CARD[2])} " + " ".join(f"{k}: {', '.join(v)}." for k, v in STACK)
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="{e(label)}">'
+            f'<style>{css}</style><defs>{"".join(defs)}</defs><rect width="{W}" height="{H}" rx="18" fill="{c["bg"]}"/>{"".join(o)}</svg>\n')
+
+
+root = Path(__file__).parent
+for name, c in THEMES.items():
+    (root / "assets" / f"profile-{name}.svg").write_text(build(c), encoding="utf-8")
