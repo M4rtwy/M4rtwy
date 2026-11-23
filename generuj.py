@@ -21,7 +21,7 @@ CARD = ("What I make", "always in progress", ["Linux tools, Discord bots,", "web
 STACK = [  # (kategoria, rzeczy)
     ("Web", ["HTML", "CSS", "JavaScript", "TypeScript", "React"]),
     ("Apps", ["Rust", "Kotlin", "Java", "C#", "C++"]),
-    ("UI", ["QML", "GTK"]),
+    ("UI", ["QML", "GTK 3", "GTK 4"]),
     ("Scripts", ["Python", "Lua", "Node.js", "Bash"]),
     ("System", ["Linux", "Hyprland", "Docker", "Git"]),
 ]
@@ -32,7 +32,7 @@ ICONS = {
     "HTML": ("html5", "E34F26"), "CSS": ("css", "1572B6"), "JavaScript": ("javascript", "F7DF1E"), "QML": ("qt", "41CD52"),
     "Python": ("python", "3776AB"), "Node.js": ("nodedotjs", "5FA04E"), "Rust": ("rust", "000000"), "Kotlin": ("kotlin", "7F52FF"),
     "TypeScript": ("typescript", "3178C6"), "React": ("react", "61DAFB"), "C++": ("cplusplus", "00599C"), "C#": ("csharp", "512BD4"),
-    "Java": ("java", "ED8B00"), "Lua": ("lua", "2C2D72"), "GTK": ("gtk", "7FE719"),
+    "Java": ("java", "ED8B00"), "Lua": ("lua", "2C2D72"), "GTK 3": ("gtk", "7FE719"), "GTK 4": ("gtk", "7FE719"),
     "Linux": ("linux", "FCC624"), "Hyprland": ("hyprland", "58E1FF"), "Bash": ("gnubash", "4EAA25"), "Docker": ("docker", "2496ED"), "Git": ("git", "F05032"),
 }
 
