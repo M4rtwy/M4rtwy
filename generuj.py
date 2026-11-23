@@ -15,7 +15,7 @@ THEMES = {
 TERM = [  # (komenda, odpowiedz)
     ("whoami", "M4rtwy"),
     ("cat about.txt", "I make stuff on Linux."),
-    ("cat now.txt", "Breaking and fixing my Hyprland setup."),
+    ("cat work.txt", "CEO of Deadzone Studio."),
 ]
 CARD = ("What I make", "always in progress", ["Linux tools, Discord bots,", "websites and whatever else", "comes to mind."])
 STACK = [  # (kategoria, rzeczy)
@@ -25,6 +25,31 @@ STACK = [  # (kategoria, rzeczy)
     ("System", ["Linux", "Hyprland", "Bash", "Docker", "Git"]),
 ]
 e = html.escape
+
+# logos from Simple Icons (assets/icons, CC0): file and brand color
+ICONS = {
+    "HTML": ("html5", "E34F26"), "CSS": ("css", "1572B6"), "JavaScript": ("javascript", "F7DF1E"), "QML": ("qt", "41CD52"),
+    "Python": ("python", "3776AB"), "Node.js": ("nodedotjs", "5FA04E"), "Rust": ("rust", "000000"), "Kotlin": ("kotlin", "7F52FF"),
+    "Linux": ("linux", "FCC624"), "Hyprland": ("hyprland", "58E1FF"), "Bash": ("gnubash", "4EAA25"), "Docker": ("docker", "2496ED"), "Git": ("git", "F05032"),
+}
+
+
+def lum(h):
+    c = [int(h.lstrip("#")[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    c = [x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4 for x in c]
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+
+def icon(name, x, y, size, chip, txt):
+    """the logo in its brand color; a color that would vanish on the chip (black Rust on dark) takes the text's"""
+    if name not in ICONS:
+        return ""
+    f, hexc = ICONS[name]
+    import re
+    d = re.search(r' d="([^"]+)"', (Path(__file__).parent / "assets" / "icons" / f"{f}.svg").read_text()).group(1)
+    a, b = lum("#" + hexc), lum(chip)
+    fill = "#" + hexc if (max(a, b) + .05) / (min(a, b) + .05) >= 2.2 else txt
+    return f'<svg x="{x}" y="{y}" width="{size}" height="{size}" viewBox="0 0 24 24"><path fill="{fill}" d="{d}"/></svg>'
 
 
 def mono(x, y, s, fill, size=15, cls="", extra=""):
@@ -92,8 +117,10 @@ def build(c):
         s += sans(330, y + 20, cat, c["dim"], 14, 600)
         x = 420
         for k in items:
-            w = len(k) * 7.4 + 24
-            s += f'<g class="pop" style="animation-delay:{1.0 + i * .08:.2f}s"><rect x="{x:.1f}" y="{y}" width="{w:.1f}" height="30" rx="15" fill="{c["chip"]}"/>{sans(round(x + w / 2, 1), y + 20, k, c["txt"], 13, 500, "middle")}</g>'
+            logo = k in ICONS
+            w = len(k) * 7.4 + 24 + (20 if logo else 0)
+            s += (f'<g class="pop" style="animation-delay:{1.0 + i * .08:.2f}s"><rect x="{x:.1f}" y="{y}" width="{w:.1f}" height="30" rx="15" fill="{c["chip"]}"/>'
+                  f'{icon(k, round(x + 11, 1), y + 8, 14, c["chip"], c["txt"])}{sans(round(x + w / 2 + (10 if logo else 0), 1), y + 20, k, c["txt"], 13, 500, "middle")}</g>')
             x += w + 8
             i += 1
     o.append(tile(308, 334, 580, 174, c, 0.65, s))
